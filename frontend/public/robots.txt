@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://github-profile-analyzer.vercel.app/sitemap.xml

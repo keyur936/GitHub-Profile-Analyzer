@@ -11,7 +11,8 @@ import DeveloperInsights from '../components/DeveloperInsights';
 import ActivityScore from '../components/ActivityScore';
 import ExportReport from '../components/ExportReport';
 import SearchBar from '../components/SearchBar';
-import { Search, RotateCcw } from 'lucide-react';
+import SEOHead from '../components/SEOHead';
+import { Search } from 'lucide-react';
 
 export default function DashboardPage({ data, onNewSearch }) {
   const [selectedRepo, setSelectedRepo] = useState(null);
@@ -23,6 +24,11 @@ export default function DashboardPage({ data, onNewSearch }) {
 
   return (
     <div id="developer-report-container" className="space-y-10 py-6 sm:py-8 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      {/* Dynamic SEO Meta for Developer Profile */}
+      <SEOHead
+        title={`${profile.name || username} (@${profile.login}) - GitHub Developer Report`}
+        description={`Analyze public GitHub repositories, programming languages, activity timeline, and activity score for ${profile.name || username} (@${profile.login}).`}
+      />
       
       {/* Top Action Bar */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-github-border pb-4 no-print">
