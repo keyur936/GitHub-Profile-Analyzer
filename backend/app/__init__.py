@@ -37,3 +37,6 @@ def create_app():
         return jsonify({"error": "Internal server error"}), 500
         
     return app
+
+# Expose app for WSGI servers
+app = create_app()
