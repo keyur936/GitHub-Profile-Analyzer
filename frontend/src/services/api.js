@@ -1,4 +1,4 @@
-const API_BASE = '/api/github';
+const API_BASE = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '') + '/api/github';
 
 export async function fetchProfileAnalysis(userInput) {
   const cleanInput = encodeURIComponent(userInput.trim());
