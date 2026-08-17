@@ -23,20 +23,37 @@ function getHeaders() {
   return headers;
 }
 
-export async function registerUser({ email, name, password }) {
-  const response = await fetch(`${API_BASE}/api/auth/register`, {
+export async function sendOtpApi({ email, name, password }) {
+  const response = await fetch(`${API_BASE}/api/auth/send-otp`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, name, password })
   });
   const data = await response.json();
   if (!response.ok) {
-    throw new Error(data.error || 'Failed to register account.');
+    throw new Error(data.error || 'Failed to send OTP code.');
+  }
+  return data;
+}
+
+export async function verifyOtpApi({ email, otp }) {
+  const response = await fetch(`${API_BASE}/api/auth/verify-otp`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, otp })
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.error || 'Failed to verify OTP code.');
   }
   if (data.token) {
     setStoredToken(data.token);
   }
   return data;
+}
+
+export async function registerUser({ email, name, password }) {
+  return sendOtpApi({ email, name, password });
 }
 
 export async function loginUser({ email, password }) {

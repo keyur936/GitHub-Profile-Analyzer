@@ -1,4 +1,6 @@
 import os
+import random
+import time
 import jwt
 from datetime import datetime, timedelta, timezone
 from flask import Blueprint, request, jsonify
@@ -13,6 +15,10 @@ from app.database import (
 auth_bp = Blueprint("auth", __name__, url_prefix="/api/auth")
 
 JWT_SECRET = os.getenv("JWT_SECRET", "github_profile_analyzer_super_secret_jwt_key_2026")
+
+# Temporary store for pending OTP verifications (10-minute expiry)
+# Format: { email: { "otp": "123456", "name": "...", "password_hash": "...", "expires_at": timestamp } }
+PENDING_OTPS = {}
 
 def generate_token(user_id):
     payload = {
@@ -33,10 +39,10 @@ def get_current_user_from_request():
     except Exception:
         return None
 
-@auth_bp.route("/register", methods=["POST"])
-def register():
+@auth_bp.route("/send-otp", methods=["POST"])
+def send_otp():
     data = request.get_json() or {}
-    email = data.get("email", "").strip()
+    email = data.get("email", "").strip().lower()
     name = data.get("name", "").strip()
     password = data.get("password", "").strip()
 
@@ -51,17 +57,69 @@ def register():
     if existing_user:
         return jsonify({"error": "An account with this email already exists."}), 400
 
+    # Generate 6-digit OTP (e.g. 584920)
+    otp = str(random.randint(100000, 999999))
     password_hash = generate_password_hash(password)
-    user = create_user(email=email, name=name, password_hash=password_hash, initial_credits=100)
+    expires_at = time.time() + (10 * 60) # Valid for 10 minutes
+
+    PENDING_OTPS[email] = {
+        "otp": otp,
+        "name": name,
+        "password_hash": password_hash,
+        "expires_at": expires_at
+    }
+
+    return jsonify({
+        "success": True,
+        "message": f"6-Digit OTP sent to {email}. (Verification Code: {otp})",
+        "demo_otp": otp,
+        "expires_in_seconds": 600
+    })
+
+@auth_bp.route("/verify-otp", methods=["POST"])
+def verify_otp():
+    data = request.get_json() or {}
+    email = data.get("email", "").strip().lower()
+    user_otp = data.get("otp", "").strip()
+
+    if not email or not user_otp:
+        return jsonify({"error": "Email and 6-digit OTP code are required."}), 400
+
+    pending = PENDING_OTPS.get(email)
+    if not pending:
+        return jsonify({"error": "No pending OTP request found for this email. Please request a new OTP."}), 400
+
+    if time.time() > pending["expires_at"]:
+        del PENDING_OTPS[email]
+        return jsonify({"error": "OTP has expired. Please request a new OTP code."}), 400
+
+    if pending["otp"] != user_otp:
+        return jsonify({"error": "Invalid 6-digit OTP code. Please check and try again."}), 400
+
+    # OTP is valid -> Create verified account with 100 free credits
+    user = create_user(
+        email=email,
+        name=pending["name"],
+        password_hash=pending["password_hash"],
+        initial_credits=100
+    )
+
+    # Clear pending OTP
+    del PENDING_OTPS[email]
+
     if not user:
-        return jsonify({"error": "Failed to create account. Please try again."}), 500
+        return jsonify({"error": "Failed to create account. User might already exist."}), 500
 
     token = generate_token(user["id"])
     return jsonify({
-        "message": "Account created successfully! 100 Free Credits added to your balance.",
+        "message": "🎉 Email Verified! Account created with 100 Free Credits.",
         "token": token,
         "user": user
     }), 201
+
+@auth_bp.route("/register", methods=["POST"])
+def register():
+    return send_otp()
 
 @auth_bp.route("/login", methods=["POST"])
 def login():
