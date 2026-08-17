@@ -13,7 +13,8 @@ def send_otp_email(to_email, otp_code, user_name="Developer"):
     smtp_server = os.getenv("SMTP_SERVER", "smtp.gmail.com")
     smtp_port = int(os.getenv("SMTP_PORT", 587))
     smtp_email = os.getenv("SMTP_EMAIL", "").strip()
-    smtp_password = os.getenv("SMTP_PASSWORD", "").strip()
+    # Clean spaces from App Password (e.g. 'jerv gkpr omly kgbc' -> 'jervgkpromlykgbc')
+    smtp_password = os.getenv("SMTP_PASSWORD", "").replace(" ", "").strip()
 
     if not smtp_email or not smtp_password:
         print(f"[Email Service Notice] SMTP_EMAIL or SMTP_PASSWORD not set in environment. Demo OTP for {to_email} is: {otp_code}")
