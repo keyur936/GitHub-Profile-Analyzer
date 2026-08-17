@@ -11,6 +11,7 @@ from app.database import (
     get_user_by_id,
     add_credits
 )
+from app.services.email_service import send_otp_email
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/api/auth")
 
@@ -69,10 +70,14 @@ def send_otp():
         "expires_at": expires_at
     }
 
+    # Send real email via SMTP
+    sent_success, email_status = send_otp_email(to_email=email, otp_code=otp, user_name=name)
+
     return jsonify({
         "success": True,
-        "message": f"6-Digit OTP sent to {email}. (Verification Code: {otp})",
+        "message": f"6-Digit OTP sent to your email inbox ({email}).",
         "demo_otp": otp,
+        "email_sent": sent_success,
         "expires_in_seconds": 600
     })
 
@@ -94,7 +99,7 @@ def verify_otp():
         return jsonify({"error": "OTP has expired. Please request a new OTP code."}), 400
 
     if pending["otp"] != user_otp:
-        return jsonify({"error": "Invalid 6-digit OTP code. Please check and try again."}), 400
+        return jsonify({"error": "Invalid 6-digit OTP code. Please check your email and try again."}), 400
 
     # OTP is valid -> Create verified account with 100 free credits
     user = create_user(
