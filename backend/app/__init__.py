@@ -12,9 +12,11 @@ def create_app():
     # Register blueprints
     from app.routes.github import github_bp
     from app.routes.auth import auth_bp
+    from app.routes.payment import payment_bp
     
     app.register_blueprint(github_bp)
     app.register_blueprint(auth_bp)
+    app.register_blueprint(payment_bp)
     
     @app.route("/")
     def index():
@@ -27,6 +29,7 @@ def create_app():
                 "/api/auth/login",
                 "/api/auth/me",
                 "/api/auth/refill",
+                "/api/payment/buy-credits",
                 "/api/github/analyze/<username>",
                 "/api/github/compare/<user1>/vs/<user2>"
             ]

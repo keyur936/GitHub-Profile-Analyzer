@@ -87,6 +87,19 @@ export async function refillCreditsApi() {
   return data;
 }
 
+export async function buyCreditsApi({ packId = 'popular_1000', paymentMethod = 'upi' }) {
+  const response = await fetch(`${API_BASE}/api/payment/buy-credits`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify({ pack_id: packId, payment_method: paymentMethod })
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.error || 'Failed to process credit purchase.');
+  }
+  return data;
+}
+
 export function logoutUser() {
   setStoredToken('');
 }
@@ -100,12 +113,12 @@ export async function fetchProfileAnalysis(userInput) {
   const data = await response.json();
   if (response.status === 401) {
     const err = new Error(data.error || 'Please login to analyze profiles.');
-    err.authRequired = True;
+    err.authRequired = true;
     throw err;
   }
   if (response.status === 402) {
     const err = new Error(data.error || 'Insufficient credits.');
-    err.insufficientCredits = True;
+    err.insufficientCredits = true;
     err.requiredCredits = data.required_credits;
     err.currentCredits = data.current_credits;
     throw err;
@@ -136,12 +149,12 @@ export async function compareProfiles(user1, user2) {
   const data = await response.json();
   if (response.status === 401) {
     const err = new Error(data.error || 'Please login to compare profiles.');
-    err.authRequired = True;
+    err.authRequired = true;
     throw err;
   }
   if (response.status === 402) {
     const err = new Error(data.error || 'Insufficient credits.');
-    err.insufficientCredits = True;
+    err.insufficientCredits = true;
     err.requiredCredits = data.required_credits;
     err.currentCredits = data.current_credits;
     throw err;

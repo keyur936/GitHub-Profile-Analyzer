@@ -8,9 +8,10 @@ import AboutPage from './pages/AboutPage';
 import CompareProfiles from './components/CompareProfiles';
 import AuthModal from './components/AuthModal';
 import InsufficientCreditsModal from './components/InsufficientCreditsModal';
-import { fetchProfileAnalysis, fetchMe, logoutUser, setStoredToken } from './services/api';
+import PricingModal from './components/PricingModal';
+import { fetchProfileAnalysis, fetchMe, logoutUser } from './services/api';
 import { saveRecentProfile } from './utils/helpers';
-import { AlertTriangle, Sparkles, Coins } from 'lucide-react';
+import { AlertTriangle, Coins } from 'lucide-react';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('home');
@@ -24,6 +25,7 @@ export default function App() {
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [authInitialTab, setAuthInitialTab] = useState('signup');
   const [isRefillOpen, setIsRefillOpen] = useState(false);
+  const [isPricingOpen, setIsPricingOpen] = useState(false);
   const [requiredCreditsCost, setRequiredCreditsCost] = useState(10);
   const [toastMessage, setToastMessage] = useState('');
 
@@ -64,6 +66,13 @@ export default function App() {
     showToast('50 Bonus Credits Added! 🪙');
   };
 
+  const handleCreditsPurchased = (newCredits) => {
+    if (user) {
+      setUser({ ...user, credits: newCredits });
+    }
+    showToast('Credit Top-up Successful! 🪙');
+  };
+
   const handleAnalyzeProfile = async (userInput) => {
     if (!userInput || !userInput.trim()) return;
 
@@ -93,7 +102,8 @@ export default function App() {
         handleOpenAuth('login');
       } else if (err.insufficientCredits) {
         setRequiredCreditsCost(err.requiredCredits || 10);
-        setIsRefillOpen(true);
+        // Trigger Paid Pricing Modal directly when credits run low
+        setIsPricingOpen(true);
       } else {
         setError(err.message || 'An error occurred while fetching the GitHub profile.');
       }
@@ -119,7 +129,7 @@ export default function App() {
         setActiveTab={setActiveTab}
         user={user}
         onOpenAuth={handleOpenAuth}
-        onOpenRefill={() => setIsRefillOpen(true)}
+        onOpenPricing={() => setIsPricingOpen(true)}
         onLogout={handleLogout}
       />
 
@@ -198,13 +208,21 @@ export default function App() {
         initialTab={authInitialTab}
       />
 
-      {/* Insufficient Credits Modal */}
+      {/* Insufficient Credits Free Bonus Modal */}
       <InsufficientCreditsModal
         isOpen={isRefillOpen}
         onClose={() => setIsRefillOpen(false)}
         user={user}
         requiredCredits={requiredCreditsCost}
         onRefilled={handleRefillCreditsSuccess}
+      />
+
+      {/* Paid Pricing & Credit Purchase Modal (₹100 for 1,000 Credits) */}
+      <PricingModal
+        isOpen={isPricingOpen}
+        onClose={() => setIsPricingOpen(false)}
+        user={user}
+        onCreditsPurchased={handleCreditsPurchased}
       />
 
       {/* Footer */}

@@ -1,12 +1,12 @@
 import React from 'react';
-import { Github, BarChart3, GitCompare, Info, Search, Coins, LogIn, LogOut, PlusCircle, Gift } from 'lucide-react';
+import { Github, BarChart3, GitCompare, Info, Search, Coins, LogIn, LogOut, PlusCircle } from 'lucide-react';
 
 export default function Navbar({
   activeTab,
   setActiveTab,
   user,
   onOpenAuth,
-  onOpenRefill,
+  onOpenPricing,
   onLogout
 }) {
   return (
@@ -85,12 +85,12 @@ export default function Navbar({
               <div className="flex items-center space-x-2 pl-2 border-l border-github-border">
                 {/* Credit Badge */}
                 <button
-                  onClick={onOpenRefill}
-                  title="Click to claim +50 free credits"
+                  onClick={onOpenPricing}
+                  title="Buy Credits (1,000 Credits for ₹100)"
                   className="px-3 py-1.5 bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/40 text-amber-300 rounded-xl text-xs font-bold font-mono flex items-center space-x-1.5 transition-all shadow-sm group"
                 >
                   <Coins className="w-4 h-4 text-amber-400 group-hover:rotate-12 transition-transform" />
-                  <span>{user.credits} 🪙</span>
+                  <span>{user.credits.toLocaleString()} 🪙</span>
                   <PlusCircle className="w-3.5 h-3.5 text-amber-400 opacity-70 group-hover:opacity-100" />
                 </button>
 
