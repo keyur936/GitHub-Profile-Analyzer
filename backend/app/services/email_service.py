@@ -6,23 +6,23 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-SMTP_SERVER = os.getenv("SMTP_SERVER", "smtp.gmail.com")
-SMTP_PORT = int(os.getenv("SMTP_PORT", 587))
-SMTP_EMAIL = os.getenv("SMTP_EMAIL", "").strip()
-SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "").strip()
-
 def send_otp_email(to_email, otp_code, user_name="Developer"):
     """
-    Sends a real HTML OTP Email to the user's inbox.
+    Sends a real HTML OTP Email to the user's inbox with timeout protection.
     """
-    if not SMTP_EMAIL or not SMTP_PASSWORD:
-        print(f"[Email Service Warning] SMTP_EMAIL or SMTP_PASSWORD not configured. OTP for {to_email} is: {otp_code}")
+    smtp_server = os.getenv("SMTP_SERVER", "smtp.gmail.com")
+    smtp_port = int(os.getenv("SMTP_PORT", 587))
+    smtp_email = os.getenv("SMTP_EMAIL", "").strip()
+    smtp_password = os.getenv("SMTP_PASSWORD", "").strip()
+
+    if not smtp_email or not smtp_password:
+        print(f"[Email Service Notice] SMTP_EMAIL or SMTP_PASSWORD not set in environment. Demo OTP for {to_email} is: {otp_code}")
         return False, "SMTP server credentials not configured in environment."
 
     try:
         msg = MIMEMultipart("alternative")
         msg["Subject"] = f"{otp_code} is your GitHub Profile Analyzer Verification Code"
-        msg["From"] = f"GitHub Profile Analyzer <{SMTP_EMAIL}>"
+        msg["From"] = f"GitHub Profile Analyzer <{smtp_email}>"
         msg["To"] = to_email
 
         # Plain text fallback
@@ -65,14 +65,15 @@ def send_otp_email(to_email, otp_code, user_name="Developer"):
         msg.attach(part1)
         msg.attach(part2)
 
-        server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
+        # 5 second connection timeout to prevent hanging
+        server = smtplib.SMTP(smtp_server, smtp_port, timeout=5)
         server.starttls()
-        server.login(SMTP_EMAIL, SMTP_PASSWORD)
-        server.sendmail(SMTP_EMAIL, to_email, msg.as_string())
+        server.login(smtp_email, smtp_password)
+        server.sendmail(smtp_email, to_email, msg.as_string())
         server.quit()
 
-        print(f"[Email Service] Real OTP Email successfully sent to {to_email}")
+        print(f"[Email Service Success] Real OTP Email sent to {to_email}")
         return True, f"OTP email sent to {to_email}"
     except Exception as e:
-        print(f"[Email Service Error] Failed to send email to {to_email}: {str(e)}")
+        print(f"[Email Service Warning] SMTP delivery exception for {to_email}: {str(e)}")
         return False, f"Failed to send email: {str(e)}"

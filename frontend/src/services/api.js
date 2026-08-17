@@ -23,8 +23,20 @@ function getHeaders() {
   return headers;
 }
 
+async function safeFetch(url, options = {}) {
+  try {
+    const response = await fetch(url, options);
+    return response;
+  } catch (err) {
+    if (err.name === 'TypeError' && err.message.includes('fetch')) {
+      throw new Error('Server connection taking longer than expected (Render free tier spin-up). Please wait 10 seconds and click again!');
+    }
+    throw err;
+  }
+}
+
 export async function sendOtpApi({ email, name, password }) {
-  const response = await fetch(`${API_BASE}/api/auth/send-otp`, {
+  const response = await safeFetch(`${API_BASE}/api/auth/send-otp`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, name, password })
@@ -37,7 +49,7 @@ export async function sendOtpApi({ email, name, password }) {
 }
 
 export async function verifyOtpApi({ email, otp }) {
-  const response = await fetch(`${API_BASE}/api/auth/verify-otp`, {
+  const response = await safeFetch(`${API_BASE}/api/auth/verify-otp`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, otp })
@@ -57,7 +69,7 @@ export async function registerUser({ email, name, password }) {
 }
 
 export async function loginUser({ email, password }) {
-  const response = await fetch(`${API_BASE}/api/auth/login`, {
+  const response = await safeFetch(`${API_BASE}/api/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, password })
@@ -77,7 +89,7 @@ export async function fetchMe() {
   if (!token) return null;
   
   try {
-    const response = await fetch(`${API_BASE}/api/auth/me`, {
+    const response = await safeFetch(`${API_BASE}/api/auth/me`, {
       method: 'GET',
       headers: getHeaders()
     });
@@ -93,7 +105,7 @@ export async function fetchMe() {
 }
 
 export async function refillCreditsApi() {
-  const response = await fetch(`${API_BASE}/api/auth/refill`, {
+  const response = await safeFetch(`${API_BASE}/api/auth/refill`, {
     method: 'POST',
     headers: getHeaders()
   });
@@ -105,7 +117,7 @@ export async function refillCreditsApi() {
 }
 
 export async function buyCreditsApi({ packId = 'popular_1000', paymentMethod = 'upi' }) {
-  const response = await fetch(`${API_BASE}/api/payment/buy-credits`, {
+  const response = await safeFetch(`${API_BASE}/api/payment/buy-credits`, {
     method: 'POST',
     headers: getHeaders(),
     body: JSON.stringify({ pack_id: packId, payment_method: paymentMethod })
@@ -123,7 +135,7 @@ export function logoutUser() {
 
 export async function fetchProfileAnalysis(userInput) {
   const cleanInput = encodeURIComponent(userInput.trim());
-  const response = await fetch(`${API_BASE}/api/github/analyze/${cleanInput}`, {
+  const response = await safeFetch(`${API_BASE}/api/github/analyze/${cleanInput}`, {
     headers: getHeaders()
   });
   
@@ -147,7 +159,7 @@ export async function fetchProfileAnalysis(userInput) {
 }
 
 export async function fetchRepoDetails(owner, repo) {
-  const response = await fetch(`${API_BASE}/api/github/repository/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}`, {
+  const response = await safeFetch(`${API_BASE}/api/github/repository/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}`, {
     headers: getHeaders()
   });
   const data = await response.json();
@@ -160,7 +172,7 @@ export async function fetchRepoDetails(owner, repo) {
 export async function compareProfiles(user1, user2) {
   const u1 = encodeURIComponent(user1.trim());
   const u2 = encodeURIComponent(user2.trim());
-  const response = await fetch(`${API_BASE}/api/github/compare/${u1}/vs/${u2}`, {
+  const response = await safeFetch(`${API_BASE}/api/github/compare/${u1}/vs/${u2}`, {
     headers: getHeaders()
   });
   const data = await response.json();
