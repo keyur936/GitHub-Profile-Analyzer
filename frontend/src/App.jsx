@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import SkeletonLoader from './components/SkeletonLoader';
@@ -6,81 +6,19 @@ import HomePage from './pages/HomePage';
 import DashboardPage from './pages/DashboardPage';
 import AboutPage from './pages/AboutPage';
 import CompareProfiles from './components/CompareProfiles';
-import AuthModal from './components/AuthModal';
-import InsufficientCreditsModal from './components/InsufficientCreditsModal';
-import PricingModal from './components/PricingModal';
-import { fetchProfileAnalysis, fetchMe, logoutUser } from './services/api';
+import { fetchProfileAnalysis } from './services/api';
 import { saveRecentProfile } from './utils/helpers';
-import { AlertTriangle, Coins } from 'lucide-react';
+import { AlertTriangle, RefreshCw } from 'lucide-react';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState('home');
-  const [user, setUser] = useState(null);
+  const [activeTab, setActiveTab] = useState('home'); // home, dashboard, compare, about
   const [analyzingUser, setAnalyzingUser] = useState('');
   const [analysisData, setAnalysisData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Modal States
-  const [isAuthOpen, setIsAuthOpen] = useState(false);
-  const [authInitialTab, setAuthInitialTab] = useState('signup');
-  const [isRefillOpen, setIsRefillOpen] = useState(false);
-  const [isPricingOpen, setIsPricingOpen] = useState(false);
-  const [requiredCreditsCost, setRequiredCreditsCost] = useState(10);
-  const [toastMessage, setToastMessage] = useState('');
-
-  // Load user on startup if token exists
-  useEffect(() => {
-    async function loadUser() {
-      const u = await fetchMe();
-      if (u) setUser(u);
-    }
-    loadUser();
-  }, []);
-
-  const showToast = (msg) => {
-    setToastMessage(msg);
-    setTimeout(() => setToastMessage(''), 4000);
-  };
-
-  const handleOpenAuth = (tab = 'signup') => {
-    setAuthInitialTab(tab);
-    setIsAuthOpen(true);
-  };
-
-  const handleAuthSuccess = (userData, message) => {
-    setUser(userData);
-    showToast(message);
-  };
-
-  const handleLogout = () => {
-    logoutUser();
-    setUser(null);
-    showToast('Logged out successfully.');
-  };
-
-  const handleRefillCreditsSuccess = (newCredits) => {
-    if (user) {
-      setUser({ ...user, credits: newCredits });
-    }
-    showToast('50 Bonus Credits Added! 🪙');
-  };
-
-  const handleCreditsPurchased = (newCredits) => {
-    if (user) {
-      setUser({ ...user, credits: newCredits });
-    }
-    showToast('Credit Top-up Successful! 🪙');
-  };
-
   const handleAnalyzeProfile = async (userInput) => {
     if (!userInput || !userInput.trim()) return;
-
-    // Intercept if not logged in
-    if (!user) {
-      handleOpenAuth('signup');
-      return;
-    }
 
     setLoading(true);
     setError(null);
@@ -92,45 +30,22 @@ export default function App() {
       if (data.profile) {
         saveRecentProfile(data.profile);
       }
-      if (data.user_credits !== undefined && user) {
-        setUser({ ...user, credits: data.user_credits });
-        showToast(`Analyzed Profile! 10 Credits Used. Remaining: ${data.user_credits} 🪙`);
-      }
       setActiveTab('dashboard');
     } catch (err) {
-      if (err.authRequired) {
-        handleOpenAuth('login');
-      } else if (err.insufficientCredits) {
-        setRequiredCreditsCost(err.requiredCredits || 10);
-        // Trigger Paid Pricing Modal directly when credits run low
-        setIsPricingOpen(true);
-      } else {
-        setError(err.message || 'An error occurred while fetching the GitHub profile.');
-      }
+      setError(err.message || 'An error occurred while fetching the GitHub profile.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#0d1117] text-[#c9d1d9] relative">
+    <div className="min-h-screen flex flex-col bg-[#0d1117] text-[#c9d1d9]">
       
-      {/* Toast Notification Banner */}
-      {toastMessage && (
-        <div className="fixed top-20 right-4 z-50 px-4 py-3 bg-github-card border border-blue-500/40 text-white rounded-2xl shadow-2xl flex items-center space-x-2 text-xs font-semibold animate-bounce">
-          <Coins className="w-4 h-4 text-amber-400" />
-          <span>{toastMessage}</span>
-        </div>
-      )}
-
       {/* Navigation Header */}
       <Navbar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
-        user={user}
-        onOpenAuth={handleOpenAuth}
-        onOpenPricing={() => setIsPricingOpen(true)}
-        onLogout={handleLogout}
+        onQuickSearch={handleAnalyzeProfile}
       />
 
       {/* Main Content Area */}
@@ -199,31 +114,6 @@ export default function App() {
         )}
 
       </main>
-
-      {/* Auth Modal (Login / Sign Up) */}
-      <AuthModal
-        isOpen={isAuthOpen}
-        onClose={() => setIsAuthOpen(false)}
-        onAuthSuccess={handleAuthSuccess}
-        initialTab={authInitialTab}
-      />
-
-      {/* Insufficient Credits Free Bonus Modal */}
-      <InsufficientCreditsModal
-        isOpen={isRefillOpen}
-        onClose={() => setIsRefillOpen(false)}
-        user={user}
-        requiredCredits={requiredCreditsCost}
-        onRefilled={handleRefillCreditsSuccess}
-      />
-
-      {/* Paid Pricing & Credit Purchase Modal (₹100 for 1,000 Credits) */}
-      <PricingModal
-        isOpen={isPricingOpen}
-        onClose={() => setIsPricingOpen(false)}
-        user={user}
-        onCreditsPurchased={handleCreditsPurchased}
-      />
 
       {/* Footer */}
       <Footer />
