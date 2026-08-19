@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { History, Users, ArrowRight } from 'lucide-react';
+import { History, Trash2 } from 'lucide-react';
 import { getRecentProfiles } from '../utils/helpers';
 
 export default function RecentlyAnalyzed({ onSelectProfile }) {
@@ -9,6 +9,12 @@ export default function RecentlyAnalyzed({ onSelectProfile }) {
     setRecents(getRecentProfiles());
   }, []);
 
+  const handleClearHistory = () => {
+    sessionStorage.removeItem('gh_analyzer_recent_profiles');
+    localStorage.removeItem('gh_analyzer_recent_profiles');
+    setRecents([]);
+  };
+
   if (recents.length === 0) return null;
 
   return (
@@ -17,6 +23,14 @@ export default function RecentlyAnalyzed({ onSelectProfile }) {
         <span className="flex items-center gap-1.5">
           <History className="w-3.5 h-3.5 text-blue-400" /> Recently Analyzed Profiles
         </span>
+        <button
+          onClick={handleClearHistory}
+          className="flex items-center space-x-1 text-[11px] text-github-muted hover:text-rose-400 transition-colors cursor-pointer"
+          title="Clear search history"
+        >
+          <Trash2 className="w-3 h-3" />
+          <span>Clear History</span>
+        </button>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">

@@ -66,12 +66,16 @@ export function getLanguageColor(language) {
   return LANGUAGE_COLORS[language] || LANGUAGE_COLORS.Other;
 }
 
-// LocalStorage helpers for Recently Analyzed Profiles
+// SessionStorage helpers for Recently Analyzed Profiles
+// (Clears automatically on page refresh or tab close!)
 const RECENT_PROFILES_KEY = 'gh_analyzer_recent_profiles';
 
 export function getRecentProfiles() {
   try {
-    const data = localStorage.getItem(RECENT_PROFILES_KEY);
+    // Clear any old legacy localStorage
+    localStorage.removeItem(RECENT_PROFILES_KEY);
+
+    const data = sessionStorage.getItem(RECENT_PROFILES_KEY);
     return data ? JSON.parse(data) : [];
   } catch (e) {
     return [];
@@ -94,8 +98,8 @@ export function saveRecentProfile(profile) {
       },
       ...filtered
     ].slice(0, 8); // Keep last 8
-    localStorage.setItem(RECENT_PROFILES_KEY, JSON.stringify(updated));
+    sessionStorage.setItem(RECENT_PROFILES_KEY, JSON.stringify(updated));
   } catch (e) {
-    console.error('Failed to save to localStorage', e);
+    console.error('Failed to save to sessionStorage', e);
   }
 }
